@@ -1,0 +1,22 @@
+{
+    "COMPANY_CODE" : "913843",
+    "USER_ID" : "MCMP",
+    "LAN_TYPE" : "en-US",
+    "Warehouses" : {
+        "00001" : "JHM Garage WH",
+        "00002" : "ValuePlus Auto Service WH",
+        "00003" : "Chyllzach Auto Care WH",
+        "00005" : "BIG OS WH",
+        "00006" : "Single Plane Vehicle WH",
+        "00008" : "Gran Toro Oro WH",
+        "00009" : "Asian All Tires Corp WH",
+        "00010" : "Wurth WH",
+        "00011" : "Local Agent WH",
+        "00012" : "Rakki WH",
+        "00013" : "Global Care Enterprise WH",
+        "00014" : "RB Motorz WH",
+        "00015" : "Etan Garage WH",
+        "00016" : "Don Mekaniko WH",
+        "00017" : "JRCE WH"
+    }
+}
