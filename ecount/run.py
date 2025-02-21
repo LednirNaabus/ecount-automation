@@ -1,5 +1,15 @@
-from ecount.api import get_zone, login_ecount
+import json
+import time
+from datetime import date
+
+from ecount.api import get_zone, login_ecount, get_item_balance_by_location
+from utils.exporter import export_to_excel
 from config import config
+
+def has_inventory_data(response):
+    if not response:
+        return False
+    return True
 
 def login():
     zone_response = get_zone(config.COMPANY_CODE)
@@ -30,3 +40,55 @@ def login():
         print("No SESSION_ID found.")
 
     return zone, session_id
+
+def run():
+    REQUEST_DELAY = 4
+    zone, session_id = login()
+
+    if not (zone and session_id):
+        print("Login failed.")
+        return
+
+    base_date = date.today()
+    formatted_date = base_date.strftime("%Y%m%d")
+
+    try:
+        with open('config/config.json', 'r') as file:
+            warehouses = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error reading config file: {e}")
+        return
+    
+    empty_warehouses = []
+
+    for warehouse_code, warehouse_name in warehouses.get("Warehouses", {}).items():
+        print(f"\nProcessing {warehouse_name}.")
+
+        if warehouse_code != list(warehouses.get("Warehouses", {}).keys())[0]:
+            print(f"Waiting {REQUEST_DELAY} seconds before next request...")
+            time.sleep(REQUEST_DELAY)
+        
+        get_item_response = get_item_balance_by_location(
+            base_date=formatted_date,
+            zone=zone,
+            session_id=session_id,
+            is_single=False,
+            warehouse_code=warehouse_code
+        )
+
+        if get_item_response:
+            if has_inventory_data(get_item_response):
+                filename = f"inventory_balance-{warehouse_name}-{formatted_date}.xlsx"
+                filename = "".join(c for c in filename if c.isalnum() or c in ('-', '_', '.'))
+                export_to_excel(get_item_response, formatted_date, filename)
+                print(f"Successfully exported data for {warehouse_code}: {warehouse_name}.")
+            else:
+                empty_warehouses.append(warehouse_name)
+                print(f"No data found for {warehouse_name}.")
+        else:
+            print(f"Failed to retrieve API data.")
+
+        if empty_warehouses:
+            print("Warehouse(s) with no data:")
+            for warehouse in empty_warehouses:
+                print(f"{warehouse}")
