@@ -13,12 +13,12 @@ def run():
         base_date = date.today()
         formatted_date = base_date.strftime("%Y%m%d")
         """
-        Base the warehouse code to the Location code found in Ecount. Check 'warehouses.json' to add more warehouses.
+        Base the warehouse code to the Location code found in Ecount. Check 'config.json' to add more warehouses.
         """
         with open('config/config.json', 'r') as file:
             warehouses = json.load(file)
 
-        warehouse_name = "JHM Garage WH" # search location name; refer to 'config/warehouses.json' file for the warehouse names
+        warehouse_name = "JHM Garage WH" # search location name; refer to 'config/config.json' file for the warehouse names
         warehouse_code = next((k for k, v in warehouses["Warehouses"].items() if v == warehouse_name), None)
 
         # By default fetching item by location is set to all
