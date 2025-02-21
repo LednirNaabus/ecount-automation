@@ -15,7 +15,7 @@ def run():
         """
         Base the warehouse code to the Location code found in Ecount. Check 'warehouses.json' to add more warehouses.
         """
-        with open('config/warehouses.json', 'r') as file:
+        with open('config/config.json', 'r') as file:
             warehouses = json.load(file)
 
         warehouse_name = "JHM Garage WH" # search location name; refer to 'config/warehouses.json' file for the warehouse names
