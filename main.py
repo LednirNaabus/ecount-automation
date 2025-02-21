@@ -9,14 +9,17 @@ def run():
     zone, session_id = login()
     if zone and session_id:
         # Change your search parameters here
-        product_code = "1034"
+        product_code = ""
         base_date = date.today()
-        # formatted_date = base_date.strftime("%Y%m%d")
-        formatted_date = "20250201"
+        formatted_date = base_date.strftime("%Y%m%d")
         """
-        Base the warehouse code to the Location code found in Ecount
+        Base the warehouse code to the Location code found in Ecount. Check 'warehouses.json' to add more warehouses.
         """
-        warehouse_code = "00001" # code for JHM
+        with open('config/warehouses.json', 'r') as file:
+            warehouses = json.load(file)
+
+        warehouse_name = "JHM Garage WH" # search location name; refer to 'config/warehouses.json' file for the warehouse names
+        warehouse_code = next((k for k, v in warehouses["Warehouses"].items() if v == warehouse_name), None)
 
         # By default fetching item by location is set to all
         # To fetch single item by location set is_single to True
