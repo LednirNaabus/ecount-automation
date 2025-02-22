@@ -42,7 +42,6 @@ def login():
     return zone, session_id
 
 def run():
-    REQUEST_DELAY = 4
     zone, session_id = login()
 
     if not (zone and session_id):
@@ -65,8 +64,8 @@ def run():
         print(f"\nProcessing {warehouse_name}.")
 
         if warehouse_code != list(warehouses.get("Warehouses", {}).keys())[0]:
-            print(f"Waiting {REQUEST_DELAY} seconds before next request...")
-            time.sleep(REQUEST_DELAY)
+            print(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
+            time.sleep(config.REQUEST_DELAY)
         
         get_item_response = get_item_balance_by_location(
             base_date=formatted_date,
