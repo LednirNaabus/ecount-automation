@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import date
+from dateutil import parser
 
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
 from utils.exporter import export_to_excel
@@ -47,8 +47,8 @@ def run():
         print("Login failed.")
         return
 
-    base_date = date.today()
-    formatted_date = base_date.strftime("%Y%m%d")
+    parsed_date = parser.parse(config.BASE_DATE)
+    formatted_date = parsed_date.strftime("%Y%m%d")
 
     try:
         with open('config/config.json', 'r') as file:

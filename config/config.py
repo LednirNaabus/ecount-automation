@@ -1,6 +1,7 @@
 import os
 import json
 
+from datetime import date
 from dotenv import load_dotenv
 
 CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,3 +17,4 @@ LAN_TYPE = json_config.get("LAN_TYPE")
 API_CERT_KEY = os.getenv('API_CERT_KEY')
 
 REQUEST_DELAY = 3.8
+BASE_DATE = json_config.get('BASE_DATE')

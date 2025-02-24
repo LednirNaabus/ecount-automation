@@ -2,6 +2,7 @@
     "COMPANY_CODE" : "913843",
     "USER_ID" : "MCMP",
     "LAN_TYPE" : "en-US",
+    "BASE_DATE" : "2024-12-01",
     "Warehouses" : {
         "00001" : "JHM Garage WH",
         "00003" : "Chyllzach Auto Care WH",
