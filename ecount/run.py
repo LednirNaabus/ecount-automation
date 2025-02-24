@@ -7,9 +7,8 @@ from utils.exporter import export_to_excel
 from config import config
 
 def has_inventory_data(response):
-    if not response:
-        return False
-    return True
+    print(json.dumps(response, indent=2, ensure_ascii=False))
+    return bool(response)
 
 def login():
     zone_response = get_zone(config.COMPANY_CODE)
