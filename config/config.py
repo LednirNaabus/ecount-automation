@@ -28,5 +28,5 @@ USER_ID = json_config.get('USER_ID')
 LAN_TYPE = json_config.get("LAN_TYPE")
 API_CERT_KEY = os.getenv('API_CERT_KEY')
 
-REQUEST_DELAY = 3.8
+REQUEST_DELAY = 5
 BASE_DATE = json_config.get('BASE_DATE')
