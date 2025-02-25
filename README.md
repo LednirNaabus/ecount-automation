@@ -8,6 +8,7 @@ Automated solution to extract data from Ecount.
  
 2. Git (to clone this repository)
 3. Ecount account
+4. Google Account to enable Google API services
 
 ### How to clone
 1. Open your terminal. Make sure git is installed on your system.
@@ -18,9 +19,9 @@ Automated solution to extract data from Ecount.
     ```
 
 ## Initialization
-Before running anything, ensure you have an API key from Ecount. For more information, read [here](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
+- Before running anything, ensure you have an API key from Ecount. For more information, read [here](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
 
-Then, create a new `.env` file in the root directory. Copy and paste your API key and/or variable secrets in this file. Refer to the example `.env` file below.
+- Then, create a new `.env` file in the root directory. Copy and paste your API key and/or variable secrets in this file. Refer to the example `.env` file below.
 
 ### Example `.env` file
 
@@ -29,7 +30,32 @@ API_CERT_KEY = "YOUR API KEY HERE"
 OTHER_STUFF = "..."
 ```
 
-Next, first run `pip install -r requirements.txt` to install dependencies.
+- Next, first run `pip install -r requirements.txt` to install dependencies.
+
+### Setting up Google API and Add Key
+- In order for the script to work and import the data to Google Sheets, you will have to create a Google [Service Account](https://cloud.google.com/iam/docs/service-accounts).
+
+1. Go to [Google Cloud Console](https://console.developers.google.com/) and create a new project.
+
+    ![Create a new project](https://cdn.analyticsvidhya.com/wp-content/uploads/2024/09/new_project.webp)
+
+2. Enable the APIs required. Click on **Enable APIs and Services**.
+
+    ![Enable APIs](https://cdn.analyticsvidhya.com/wp-content/uploads/2024/10/image-36.png)
+
+3. Then search for **Google Sheets API** and **Google Drive API**.
+
+4. Create the credentials for your service account.
+
+    ![Credentials](https://cdn.analyticsvidhya.com/wp-content/uploads/2024/10/screenshot-from-2020-07-22-18-28-29-6708c0226aca9.webp)
+
+5. Go to the Navigation menu located on the left and then go to **APIs & Services** > **Credentials** > *__your service account__* > **Keys** > **Add Key**.
+
+    ![Add key](add_key.png)
+
+    This will generate a key for you stored in a `.json` file.
+
+**Note:** Place a copy of the generated key `.json` file under `C:\ecount-automation\config\` in this repository.
 
 ## Configuration
 Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_ID`, etc. You can also add warehouses in the `config.json` file by appending. Adjusting the `json` file will sync with `config.py`.
