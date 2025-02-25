@@ -1,14 +1,19 @@
 import json
 import time
-from dateutil import parser
+import pandas as pd
 
+from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
 from utils.exporter import export_to_excel
 from config import config
 
 def has_inventory_data(response):
-    print(json.dumps(response, indent=2, ensure_ascii=False))
-    return bool(response)
+    if response["Data"]["Result"]:
+        print(json.dumps(response, indent=2, ensure_ascii=False))
+        return True
+    else:
+        print(f"No Data: {response["Data"]["Result"]}")
+        return False
 
 def login():
     zone_response = get_zone(config.COMPANY_CODE)
@@ -59,32 +64,32 @@ def run():
     
     empty_warehouses = []
 
-    for warehouse_code, warehouse_name in warehouses.get("Warehouses", {}).items():
-        print(f"\nProcessing {warehouse_name}.")
+    filename = f"inventory_balance_asof_{formatted_date}.xlsx"
+    with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+        for warehouse_code, warehouse_name in warehouses.get("Warehouses", {}).items():
+            print(f"\nProcessing {warehouse_name}...")
 
-        if warehouse_code != list(warehouses.get("Warehouses", {}).keys())[0]:
-            print(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
-            time.sleep(config.REQUEST_DELAY)
-        
-        get_item_response = get_item_balance_by_location(
+            if warehouse_code != list(warehouses["Warehouses"].keys())[0]:
+                print(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
+                time.sleep(config.REQUEST_DELAY)
+
+            get_item_response = get_item_balance_by_location(
             base_date=formatted_date,
             zone=zone,
             session_id=session_id,
             is_single=False,
             warehouse_code=warehouse_code
-        )
+            )
 
-        if get_item_response:
-            if has_inventory_data(get_item_response):
-                export_to_excel(get_item_response, warehouse_name, formatted_date, file_ext=".xlsx")
-                print(f"Successfully exported data for {warehouse_code}: {warehouse_name}.")
-            else:
-                empty_warehouses.append(warehouse_name)
-                print(f"No data found for {warehouse_name}.")
-        else:
-            print(f"Failed to retrieve API data.")
+            if get_item_response:
+                if has_inventory_data(get_item_response):
+                    export_to_excel(writer, get_item_response, warehouse_name, formatted_date, file_ext=".xlsx")
+                    print(f"Exported data for {warehouse_code}:{warehouse_name}")
+                else:
+                    empty_warehouses.append(warehouse_name)
+                    print(f"No data found for {warehouse_name}")
 
-        if empty_warehouses:
-            print("Warehouse(s) with no data:")
-            for warehouse in empty_warehouses:
-                print(f"{warehouse}")
+    if empty_warehouses:
+        print("Warehouse(s) with no data:")
+        for warehouse in empty_warehouses:
+            print(f"{warehouse}")
