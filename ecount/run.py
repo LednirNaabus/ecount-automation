@@ -76,9 +76,7 @@ def run():
 
         if get_item_response:
             if has_inventory_data(get_item_response):
-                filename = f"inventory_balance-{warehouse_name}-{formatted_date}.xlsx"
-                filename = "".join(c for c in filename if c.isalnum() or c in ('-', '_', '.'))
-                export_to_excel(get_item_response, formatted_date, filename)
+                export_to_excel(get_item_response, warehouse_name, formatted_date, file_ext=".xlsx")
                 print(f"Successfully exported data for {warehouse_code}: {warehouse_name}.")
             else:
                 empty_warehouses.append(warehouse_name)
