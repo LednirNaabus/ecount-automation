@@ -4,6 +4,7 @@ import pandas as pd
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
+from ecount.google_sheets import export_to_google_sheets
 from utils.exporter import export_to_excel
 from config import config
 
@@ -89,6 +90,8 @@ def run():
                     empty_warehouses.append(warehouse_name)
                     print(f"No data found for {warehouse_name}")
 
+    print(f"Transferring files to Google Sheets...")
+    export_to_google_sheets(filename)
     if empty_warehouses:
         print("Warehouse(s) with no data:")
         for warehouse in empty_warehouses:
