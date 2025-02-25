@@ -1,4 +1,5 @@
 .env
+google-api-key.json
 *.xlsx
 *.csv
 __pycache__/
