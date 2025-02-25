@@ -3,7 +3,6 @@ import json
 import gspread
 
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import date
 from dotenv import load_dotenv
 
 CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
