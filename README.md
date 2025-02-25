@@ -10,7 +10,7 @@ Automated solution to extract data from Ecount.
 3. Ecount account
 
 ### How to clone
-1. Open your terminal.
+1. Open your terminal. Make sure git is installed on your system.
 2. Navigate to a directory where you want to store the repository (ex: `"Documents"` or `"Desktop"`)
 3. Enter the following command:
     ```
@@ -46,6 +46,6 @@ Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_I
 ```
 
 ## Run the script
-Open your terminal, navigate to the directory where you stored this project (i.e., `"Documents/ecount-automation/"`).
+Open your terminal, navigate to the directory where you cloned this project (i.e., `"Documents/ecount-automation/"`).
 
 Enter `python main.py` in your terminal to run the script.
