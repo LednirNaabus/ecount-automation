@@ -6,7 +6,7 @@ Automated solution to extract data from Ecount.
 
     1.1 Verify Python is installed by entering `python --version` on your terminal.
  
-2. Git (to clone this repository)
+2. Git (optional)
 3. Ecount account
 4. Google Account to enable Google API services
 
