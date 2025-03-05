@@ -68,7 +68,7 @@ In order for the script to work and import the data to Google Sheets, you will h
 
 8. Modify the share access of the Spreadsheet to "**Anyone with the link**".
 
-9. Add your Google Service Account by pasting from your clipboard to the text box. Click "**Done**" once done.
+9. Paste your Google Service Account information from your clipboard into the text box. Click "**Done**" once done.
 
     ![Share Access](sheets_share_access.png)
 
