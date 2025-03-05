@@ -18,7 +18,7 @@ Automated solution to extract data from Ecount.
     git clone git@github.com:LednirNaabus/ecount-automation.git
     ```
 
-## Initialization
+## Setting it all up
 - Before running anything, ensure you have an API key from Ecount. For more information, read [here](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
 
 - Then, create a new `.env` file in the root directory. Copy and paste your API key and/or variable secrets in this file. Refer to the example `.env` file below.
@@ -29,8 +29,6 @@ Automated solution to extract data from Ecount.
 API_CERT_KEY = "YOUR API KEY HERE"
 OTHER_STUFF = "..."
 ```
-
-- Next, first run `pip install -r requirements.txt` to install dependencies.
 
 ### Setting up Google API and Add Key
 - In order for the script to work and import the data to Google Sheets, you will have to create a Google [Service Account](https://cloud.google.com/iam/docs/service-accounts).
@@ -70,6 +68,10 @@ Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_I
     }
 }
 ```
+
+## Initialization (IMPORTANT)
+- Before actually running the script, install the required dependencies first.
+- Enter `pip install -r requirements.txt` to install the dependecies.
 
 ## Run the script
 Open your terminal, navigate to the directory where you cloned this project (i.e., `"Documents/ecount-automation/"`).
