@@ -5,7 +5,8 @@ import time
 from config import config
 
 def export_to_google_sheets(file):
-    sheet = config.GOOGLE_CLIENT.open("GOParts Inventory Movement [v3]")
+    # sheet = config.GOOGLE_CLIENT.open("GOParts Inventory Movement [v3]")
+    sheet = config.GOOGLE_CLIENT.open(config.SHEET_NAME)
     all_sheets = pd.read_excel(file, sheet_name=None)
     sheet_names = []
     for sheet_name, df in all_sheets.items():
@@ -36,7 +37,7 @@ def export_to_google_sheets(file):
     return sheet_names
 
 def create_ingested_sheet(sheet_names):
-    sheet = config.GOOGLE_CLIENT.open("GOParts Inventory Movement [v3]")
+    sheet = config.GOOGLE_CLIENT.open(config.SHEET_NAME)
 
     col_to_extract = ["B2:B", "H2:H", "C2:E", "J2:K", "I2:I", "G2:G", "F2:F"]
     filter_condition = "B2:B<>\"\""
@@ -51,9 +52,10 @@ def create_ingested_sheet(sheet_names):
 
     try:
         print("Opening sheet named 'ingested_sheet'...")
-        ingested_sheet = sheet.worksheet("ingested_sheet")
+        # ingested_sheet = sheet.worksheet("ingested_sheet")
+        ingested_sheet = sheet.worksheet(config.WORKSHEET_NAME)
     except Exception:
-        ingested_sheet = sheet.add_worksheet(title="ingested_sheet", rows="1000", cols="26")
+        ingested_sheet = sheet.add_worksheet(title=config.WORKSHEET_NAME, rows="1000", cols="26")
         print("No sheet named 'ingested_sheet' found. Creating one...")
 
     headers = [
