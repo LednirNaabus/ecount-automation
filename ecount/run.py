@@ -4,7 +4,7 @@ import pandas as pd
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
-from ecount.google_sheets import export_to_google_sheets, create_ingested_sheet
+from ecount.google_sheets import export_to_google_sheets, create_ingested_sheet, validate_file, check_spreadsheet
 from utils.exporter import export_to_excel
 from config import config
 
@@ -113,6 +113,8 @@ def run():
     empty_warehouses = process_warehouses(zone, session_id, warehouses, formatted_date, filename)
 
     print(f"Transferring files to Google Sheets...")
-    sheet = export_to_google_sheets(filename)
-    create_ingested_sheet(sheet)
+    excel_file = validate_file(filename)
+    target_spreadsheet = check_spreadsheet(config.GOOGLE_CLIENT, config.SHEET_NAME)
+    exported = export_to_google_sheets(excel_file, target_spreadsheet)
+    create_ingested_sheet(target_spreadsheet, exported)
     report_empty_warehouse(empty_warehouses)
