@@ -58,18 +58,38 @@ In order for the script to work and import the data to Google Sheets, you will h
 
     This will generate a key for you stored in a `.json` file.
 
-**Note:** Place a copy of the generated key `.json` file under `C:\ecount-automation\config\` in this repository.
+**Note:** Place a copy of the generated key `.json` file under `C:\ecount-automation\config\` in this repository. It is also recommended to rename the config file to `google-api-key.json`.
+
+6. In the same page, click **Details** then copy your Google Service account email. You will need this in the next step.
+
+    ![Email](google_service_account.png)
+
+7. Open Google Sheets and create a new Spreadsheet. Name it to whatever name you set in `config.json` (`"SHEET_NAME"`).
+
+8. Modify the share access of the Spreadsheet to "**Anyone with the link**".
+
+9. Add your Google Service Account by pasting from your clipboard to the text box. Click "**Done**" once done.
+
+    ![Share Access](sheets_share_access.png)
 
 ## Configuration
 Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_ID`, etc. You can also add warehouses in the `config.json` file by inserting the desired warehouse. Changing the parameters in the `json` file will sync with `config.py`.
 
+### Sample configuration file
+
+You can copy this sample configuration `json` file and modify the needed parameters.
+
 ```json
 {
-    ...,
+    "COMPANY_CODE" : "000001",
+    "USER_ID" : "ABCD",
+    "LAN_TYPE" : "en-US",
+    "BASE_DATE" : "2024-12-01",
+    "SHEET_NAME" : "Untitled Sheet",
+    "INGESTION_WORKSHEET_NAME" : "ingestion_sheet",
     "Warehouses" : {
-        "ID1" : "Warehouse1",
-        "ID2" : "Warehouse2",
-        # add here
+        "ID1" : "Warehouse 1",
+        "ID2" : "Warehouse 2"
     }
 }
 ```
