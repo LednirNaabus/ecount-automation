@@ -10,7 +10,9 @@ Automated solution to extract data from Ecount.
 3. Ecount account
 4. Google Account to enable Google API services
 
-### How to clone
+### Copying files
+
+#### How to clone
 1. Open your terminal. Make sure git is installed on your system.
 2. Navigate to a directory where you want to store the repository (ex: `"Documents"` or `"Desktop"`)
 3. Enter the following command:
@@ -18,8 +20,11 @@ Automated solution to extract data from Ecount.
     git clone git@github.com:LednirNaabus/ecount-automation.git
     ```
 
+#### Another Method
+Click the green button of this repository located on the upper right. In the dropdown selection, click "***Download ZIP***".
+
 ## Setting it all up
-- Before running anything, ensure you have an API key from Ecount. For more information, read [here](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
+- Ensure you have an API key from [Ecount](https://login.ecount.com/Login/). For more information about the Ecount OpenAPI, read [here](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
 
 - Then, create a new `.env` file in the root directory. Copy and paste your API key and/or variable secrets in this file. Refer to the example `.env` file below.
 
@@ -31,7 +36,7 @@ OTHER_STUFF = "..."
 ```
 
 ### Setting up Google API and Add Key
-- In order for the script to work and import the data to Google Sheets, you will have to create a Google [Service Account](https://cloud.google.com/iam/docs/service-accounts).
+In order for the script to work and import the data to Google Sheets, you will have to create a Google [Service Account](https://cloud.google.com/iam/docs/service-accounts).
 
 1. Go to [Google Cloud Console](https://console.developers.google.com/) and create a new project.
 
@@ -56,7 +61,7 @@ OTHER_STUFF = "..."
 **Note:** Place a copy of the generated key `.json` file under `C:\ecount-automation\config\` in this repository.
 
 ## Configuration
-Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_ID`, etc. You can also add warehouses in the `config.json` file by appending. Adjusting the `json` file will sync with `config.py`.
+Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_ID`, etc. You can also add warehouses in the `config.json` file by inserting the desired warehouse. Changing the parameters in the `json` file will sync with `config.py`.
 
 ```json
 {
@@ -77,3 +82,5 @@ Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_I
 Open your terminal, navigate to the directory where you cloned this project (i.e., `"Documents/ecount-automation/"`).
 
 Enter `python main.py` in your terminal to run the script.
+
+**[Back to top](#prerequisites)**
