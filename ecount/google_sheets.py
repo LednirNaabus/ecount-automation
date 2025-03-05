@@ -5,7 +5,6 @@ import time
 from config import config
 
 def export_to_google_sheets(file):
-    # sheet = config.GOOGLE_CLIENT.open("GOParts Inventory Movement [v3]")
     sheet = config.GOOGLE_CLIENT.open(config.SHEET_NAME)
     all_sheets = pd.read_excel(file, sheet_name=None)
     sheet_names = []
@@ -52,7 +51,6 @@ def create_ingested_sheet(sheet_names):
 
     try:
         print("Opening sheet named 'ingested_sheet'...")
-        # ingested_sheet = sheet.worksheet("ingested_sheet")
         ingested_sheet = sheet.worksheet(config.WORKSHEET_NAME)
     except Exception:
         ingested_sheet = sheet.add_worksheet(title=config.WORKSHEET_NAME, rows="1000", cols="26")
