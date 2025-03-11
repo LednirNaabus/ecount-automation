@@ -44,8 +44,18 @@ def export_to_google_sheets(excel_file: pd.ExcelFile, target_spreadsheet: gsprea
                 cols=len(df.columns) + 10
             )
 
-        worksheet.clear()
-        worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+        existing_data = worksheet.get_all_values()
+        last_row = len(existing_data)
+
+        total_rows = worksheet.row_count
+        required_rows = last_row + len(df)
+
+        if required_rows > total_rows:
+            worksheet.add_rows(required_rows - total_rows)
+
+        new_data = df.values.tolist()
+        worksheet.update(f"A{last_row + 1}", new_data)
+
         exported_sheets.append(sheet_name)
         print(f"Exported: {sheet_name}")
     return exported_sheets

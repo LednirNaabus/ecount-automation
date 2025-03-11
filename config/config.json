@@ -2,7 +2,7 @@
     "COMPANY_CODE" : "913843",
     "USER_ID" : "MCMP",
     "LAN_TYPE" : "en-US",
-    "BASE_DATE" : "2024-12-01",
+    "BASE_DATE" : "2025-02-12",
     "SHEET_NAME" : "GOParts Inventory Movement [v3]",
     "INGESTION_WORKSHEET_NAME" : "ingestion_sheet",
     "Warehouses" : {
