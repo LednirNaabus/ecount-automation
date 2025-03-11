@@ -56,6 +56,12 @@ def export_to_google_sheets(excel_file: pd.ExcelFile, target_spreadsheet: gsprea
         new_data = df.values.tolist()
         worksheet.update(f"A{last_row + 1}", new_data)
 
+        # TO DO:
+        # Rework how the script fetches/calls API requests
+        # Current solution is to add a few second delay before making another request
+        print("Waiting 5 seconds before making another request...")
+        time.sleep(config.REQUEST_DELAY)
+
         exported_sheets.append(sheet_name)
         print(f"Exported: {sheet_name}")
     return exported_sheets

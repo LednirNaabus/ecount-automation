@@ -116,5 +116,5 @@ def run():
     excel_file = validate_file(filename)
     target_spreadsheet = check_spreadsheet(config.GOOGLE_CLIENT, config.SHEET_NAME)
     exported = export_to_google_sheets(excel_file, target_spreadsheet)
-    create_ingested_sheet(target_spreadsheet, exported)
     report_empty_warehouse(empty_warehouses)
+    create_ingested_sheet(target_spreadsheet, exported)
