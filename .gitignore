@@ -4,4 +4,4 @@ google-api-key.json
 *.csv
 __pycache__/
 tests/
-config.json
+config/config.json
