@@ -60,6 +60,7 @@ def load_warehouse_config():
 
 def process_warehouses(zone, session_id, warehouses, formatted_date, filename):
     empty_warehouses = []
+    data_written = False
     with pd.ExcelWriter(filename, engine='openpyxl') as writer:
         warehouse = warehouses.get("Warehouses", {}).items()
         
@@ -76,10 +77,14 @@ def process_warehouses(zone, session_id, warehouses, formatted_date, filename):
                 if has_inventory_data(inventory_data):
                     export_to_excel(writer, inventory_data, warehouse_name, formatted_date, file_ext=".xlsx")
                     print(f"Exported data for {warehouse_code}:{warehouse_name}")
+                    data_written = True
                 else:
                     empty_warehouses.append(warehouse_name)
                     print(f"No data found for {warehouse_name}")
     
+        if not data_written:
+            print("All warehouses returned empty data.")
+            pd.DataFrame(["Empty"]).to_excel(writer, sheet_name=formatted_date,index=False)
     return empty_warehouses
 
 def fetch_data(zone, session_id, formatted_date, warehouse_code):
@@ -111,6 +116,10 @@ def run():
     
     filename = f"inventory_balance_asof_{formatted_date}.xlsx"
     empty_warehouses = process_warehouses(zone, session_id, warehouses, formatted_date, filename)
+    total_warehouses = len(warehouses.get("Warehouses", {}))
+    if len(empty_warehouses) == total_warehouses:
+        print("API response returns empty data for all warehouses. Skipping export to Google Sheets. Try setting another date in your config file.")
+        return
 
     print(f"Transferring files to Google Sheets...")
     excel_file = validate_file(filename)
