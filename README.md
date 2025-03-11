@@ -73,7 +73,7 @@ In order for the script to work and import the data to Google Sheets, you will h
     ![Share Access](sheets_share_access.png)
 
 ## Configuration
-Edit the `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_ID`, etc. You can also add warehouses in the `config.json` file by inserting the desired warehouse. Changing the parameters in the `json` file will sync with `config.py`.
+Inside of the `config` directory, create a `config.json` file to adjust parameters such as `COMPANY_CODE`, `USER_ID`, etc. You can also add warehouses in the `config.json` file by inserting the desired warehouse. Changing the parameters in the `json` file will sync with `config.py`.
 
 ### Sample configuration file
 
