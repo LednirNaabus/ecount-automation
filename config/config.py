@@ -27,7 +27,7 @@ SCOPE = [
 
 creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
 GOOGLE_CLIENT = gspread.authorize(creds)
-BQ_CLIENT = bigquery.Client(credentials=creds)
+BQ_CLIENT = bigquery.Client(credentials=creds, project=creds.project_id)
 
 COMPANY_CODE = json_config.get('COMPANY_CODE')
 USER_ID = json_config.get('USER_ID')
