@@ -6,6 +6,7 @@ from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
 from ecount.google_sheets import export_to_google_sheets, create_ingested_sheet, validate_file, check_spreadsheet
 from utils.exporter import export_to_excel
+from utils.bq_utils import load_data_to_bq
 from config import config
 
 def has_inventory_data(response):
@@ -127,3 +128,11 @@ def run():
     exported = export_to_google_sheets(excel_file, target_spreadsheet)
     report_empty_warehouse(empty_warehouses)
     create_ingested_sheet(target_spreadsheet, exported)
+
+    sheet_id = "1EGwJfHGTApzXRnuEv0eQrUccfmZhunaNdkrI-mKPHV"
+    sheet_name = "Sheet1"
+
+    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
+    df = pd.read_csv(url)
+    print("Loading data into BigQuery...")
+    load_data_to_bq(df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
