@@ -36,5 +36,8 @@ API_CERT_KEY = os.getenv('API_CERT_KEY')
 BASE_DATE = json_config.get('BASE_DATE')
 SHEET_NAME = json_config.get('SHEET_NAME')
 WORKSHEET_NAME = json_config.get('INGESTION_WORKSHEET_NAME')
+GCLOUD_PROJECT_ID = json_config.get('BIGQUERY_INFO')['project_id']
+BQ_DATASET_NAME = json_config.get('BIGQUERY_INFO')['dataset_name']
+BQ_TABLE_NAME = json_config.get('BIGQUERY_INFO')['table_name']
 
 REQUEST_DELAY = 5
