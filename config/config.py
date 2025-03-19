@@ -2,7 +2,8 @@ import os
 import json
 import gspread
 
-from oauth2client.service_account import ServiceAccountCredentials
+from google.cloud import bigquery
+from google.oauth2 import service_account
 from dotenv import load_dotenv
 
 CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,16 +13,21 @@ config_path = os.path.join(CONFIG_DIR, 'config.json')
 GOOGLE_API_CREDS_DIR = os.path.dirname(os.path.abspath(__file__))
 google_api_creds = os.path.join(GOOGLE_API_CREDS_DIR, 'google-api-key.json')
 
+with open(google_api_creds, 'r') as file:
+    creds_dict = json.load(file)
+
 with open(config_path, 'r') as file:
     json_config = json.load(file)
 
 SCOPE = [
-    'https://spreadsheets.google.com/feeds',
-    'https://www.googleapis.com/auth/drive'
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/bigquery'
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(google_api_creds, SCOPE)
+creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
 GOOGLE_CLIENT = gspread.authorize(creds)
+BQ_CLIENT = bigquery.Client(credentials=creds)
 
 COMPANY_CODE = json_config.get('COMPANY_CODE')
 USER_ID = json_config.get('USER_ID')
