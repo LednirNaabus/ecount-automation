@@ -5,3 +5,4 @@ google-api-key.json
 __pycache__/
 tests/
 config/config.json
+To-Do.md
