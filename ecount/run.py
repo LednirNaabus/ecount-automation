@@ -1,6 +1,7 @@
 import json
 import time
 import pandas as pd
+import logging
 from typing import Optional, Any, Dict
 
 from dateutil import parser
@@ -9,6 +10,7 @@ from ecount.google_sheets import export_to_google_sheets, create_ingested_sheet,
 from utils.exporter import export_to_df
 from utils.bq_utils import load_data_to_bq
 from config import config
+from utils.logger import EcountLogger
 
 def has_inventory_data(response):
     if response["Data"]["Result"]:
@@ -100,18 +102,21 @@ def fetch_data(zone, session_id, formatted_date, warehouse_code):
 
 def report_empty_warehouse(empty_warehouses):
     if empty_warehouses:
-        print("Warehouse(s) with no data:")
         for warehouse in empty_warehouses:
             print(f"{warehouse}")
 
 def run():
+    ecount_logger = EcountLogger(filename="ecount-automation.log", mode="w", level=logging.DEBUG)
+    ecount_logger.info("Logging in...")
     zone, session_id = login()
+    ecount_logger.info("Login success!")
 
     if not (zone and session_id):
-        print("Login failed.")
+        ecount_logger.error("Login failed.")
         return
 
     formatted_date = get_formatted_date(config.BASE_DATE)
+    ecount_logger.info("Loading warehouse configuration file...")
     warehouses = load_warehouse_config()
     if not warehouses:
         return
@@ -119,12 +124,12 @@ def run():
     empty_warehouses, df = process_warehouses(zone, session_id, warehouses, formatted_date)
     total_warehouses = len(warehouses.get("Warehouses", {}))
     if len(empty_warehouses) == total_warehouses:
-        print("API response returns empty data for all warehouses.")
+        ecount_logger.info("API response returns empty data for all warehouses.")
         return
     
     report_empty_warehouse(empty_warehouses)
     print("\nDataframe:")
     print(df)
 
-    print("Loading data into BigQuery...")
+    ecount_logger.info("Loading data into BigQuery...")
     load_data_to_bq(df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
