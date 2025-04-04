@@ -12,23 +12,23 @@ from utils.bq_utils import load_data_to_bq
 from config import config
 from utils.logger import EcountLogger
 
+ecount_logger = EcountLogger(name="EcountLogger", filename="run.log", mode="w", level=logging.DEBUG)
+
 def has_inventory_data(response):
     if response["Data"]["Result"]:
-        print(json.dumps(response, indent=2, ensure_ascii=False))
         return True
     else:
-        print(f"No Data: {response["Data"]["Result"]}")
         return False
 
 def login():
     zone_response = get_zone(config.COMPANY_CODE)
     if not zone_response or "Data" not in zone_response:
-        print("No zone found.")
+        ecount_logger.error("No zone found.")
         return None, None
     
     zone = zone_response["Data"].get("ZONE")
-    print(f"ZONE: {zone}")
-    print(f"Logging in...\n")
+    ecount_logger.info(f"ZONE: {zone}")
+    ecount_logger.info(f"Logging in...\n")
 
     login_response = login_ecount(
         config.COMPANY_CODE,
@@ -39,14 +39,14 @@ def login():
     )
 
     if not login_response or "Data" not in login_response or "Datas" not in login_response["Data"]:
-        print("Login failed.")
+        ecount_logger.error("Login failed.")
         return zone, None
 
     session_id = login_response["Data"]["Datas"].get("SESSION_ID")
-    print(f"SESSION_ID: {session_id}")
+    ecount_logger.info(f"SESSION_ID: {session_id}")
 
     if not session_id:
-        print("No SESSION_ID found.")
+        ecount_logger.error("No SESSION_ID found.")
 
     return zone, session_id
 
@@ -59,7 +59,7 @@ def load_warehouse_config() -> Optional[dict]:
         with open('config/config.json', 'r') as file:
             return json.load(file)
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"Error reading config file: {e}")
+        ecount_logger.error(f"Error reading config file: {e}")
         return None
 
 def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], formatted_date: str) -> list[str] | pd.DataFrame:
@@ -67,9 +67,9 @@ def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], f
     dataframe_list = []
     warehouse = warehouses.get("Warehouses", {}).items()
     for i, (warehouse_code, warehouse_name) in enumerate(warehouse):
-        print(f"\nProcessing {warehouse_name}...")
+        ecount_logger.info(f"Processing {warehouse_name}...")
         if i > 0:
-            print(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
+            ecount_logger.info(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
             time.sleep(config.REQUEST_DELAY)
 
         inventory_data = fetch_data(zone, session_id, formatted_date, warehouse_code)
@@ -78,15 +78,15 @@ def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], f
             if has_inventory_data(inventory_data):
                 df = export_to_df(inventory_data, warehouse_name, formatted_date)
                 dataframe_list.append(df)
-                print(f"Exported data for {warehouse_code}:{warehouse_name}")
+                ecount_logger.info(f"Exported data for {warehouse_code}:{warehouse_name}")
             else:
                 empty_warehouses.append(warehouse_name)
-                print(f"No data found for {warehouse_name}")
+                ecount_logger.info(f"No data found for {warehouse_name}")
     
     if dataframe_list:
         combined_df = pd.concat(dataframe_list, ignore_index=True)
     else:
-        print("All warehouses returned empty data.")
+        ecount_logger.info("All warehouses returned empty data.")
         combined_df = pd.DataFrame(["Empty"])
 
     return empty_warehouses, combined_df
@@ -106,14 +106,14 @@ def report_empty_warehouse(empty_warehouses):
             print(f"{warehouse}")
 
 def run():
-    ecount_logger = EcountLogger(filename="ecount-automation.log", mode="w", level=logging.DEBUG)
     ecount_logger.info("Logging in...")
     zone, session_id = login()
-    ecount_logger.info("Login success!")
 
     if not (zone and session_id):
         ecount_logger.error("Login failed.")
         return
+
+    ecount_logger.info("Login success!")
 
     formatted_date = get_formatted_date(config.BASE_DATE)
     ecount_logger.info("Loading warehouse configuration file...")
@@ -132,4 +132,4 @@ def run():
     print(df)
 
     ecount_logger.info("Loading data into BigQuery...")
-    load_data_to_bq(df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
+    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
