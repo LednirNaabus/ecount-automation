@@ -99,10 +99,12 @@ def fetch_data(zone, session_id, formatted_date, warehouse_code):
         warehouse_code=warehouse_code
     )
 
-def report_empty_warehouse(empty_warehouses):
+def report_empty_warehouse(empty_warehouses) -> list:
+    lst = []
     if empty_warehouses:
         for warehouse in empty_warehouses:
-            print(f"{warehouse}")
+            lst.append(warehouse)
+    return lst
 
 def run():
     ecount_logger.info("Logging in...")
@@ -126,9 +128,10 @@ def run():
         ecount_logger.info("API response returns empty data for all warehouses.")
         return
     
-    report_empty_warehouse(empty_warehouses)
-    print("\nDataframe:")
-    print(df)
+    empty = report_empty_warehouse(empty_warehouses)
+    ecount_logger.info(f"Empty Warehouses: {empty}")
+    ecount_logger.info("\nDataframe:")
+    ecount_logger.info(df)
 
     ecount_logger.info("Loading data into BigQuery...")
     load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
