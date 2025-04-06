@@ -6,7 +6,6 @@ from typing import Optional, Any, Dict
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
-from ecount.google_sheets import export_to_google_sheets, create_ingested_sheet, validate_file, check_spreadsheet
 from utils.exporter import export_to_df
 from utils.bq_utils import load_data_to_bq
 from config import config
