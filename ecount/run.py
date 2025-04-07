@@ -2,7 +2,7 @@ import json
 import time
 import pandas as pd
 import logging
-from typing import Optional, Any, Dict
+from typing import Union, Optional, Any, Dict, Tuple
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
@@ -13,13 +13,30 @@ from utils.logger import EcountLogger
 
 ecount_logger = EcountLogger(name="EcountLogger", filename="run.log", mode="w", level=logging.DEBUG)
 
-def has_inventory_data(response):
+def has_inventory_data(response: dict) -> bool:
+    """
+    Checks if the response contains inventory data.
+    
+    Parameters:
+        response (dict): A dictionary representing the API response.
+                        Expected to have the structure response["Data"]["Result"].
+
+    Returns:
+        bool: True if response["Data"]["Result"] contains data, otherwise returns False.
+    """
     if response["Data"]["Result"]:
         return True
     else:
         return False
 
-def login():
+def login() -> Tuple[Optional[str], Optional[str]]:
+    """
+    Logs into the system and retrieves the zone and session_id.
+    Returns:
+        tuple: A tuple containing:
+            - zone (str or None): The zone string returned from the zone response.
+            - session_id (str or None): The session ID from the login response.
+    """
     zone_response = get_zone(config.COMPANY_CODE)
     if not zone_response or "Data" not in zone_response:
         ecount_logger.error("No zone found.")
@@ -49,11 +66,25 @@ def login():
 
     return zone, session_id
 
-def get_formatted_date(base_date):
+def get_formatted_date(base_date: str) -> str:
+    """
+    Parses a date string and returns it in 'YYYY/MM/DD' format.
+    Parameters:
+        base_date (str): A date string to parse.
+
+    Returns:
+        str: The formatted date string in 'YYYY/MM/DD' format.
+    """
     parsed_date = parser.parse(base_date)
     return parsed_date.strftime("%Y%m%d")
 
 def load_warehouse_config() -> Optional[dict]:
+    """
+    Loads and parses the warehouse JSON configuration file.
+
+    Returns:
+        Optional[dict]: The parsed JSON content of the configuration file. Returns None if there is an error reading the file.
+    """
     try:
         with open('config/config.json', 'r') as file:
             return json.load(file)
@@ -62,6 +93,27 @@ def load_warehouse_config() -> Optional[dict]:
         return None
 
 def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], formatted_date: str) -> list[str] | pd.DataFrame:
+    """
+    Processes the data loaded from the warehouse configuration file and returns a list of empty warehouses and a pandas DataFrame of warehouses that contain data.
+
+    For each warehouse, this function does the following:
+    1. Fetches inventory data using the provided credentials (zone, session_id, date).
+    2. If data is found and valid, it exports to a pandas DataFrame.
+    3. If no data is found, it appends the warehouse name to the empty_warehouse list.
+    4. Returns a DataFrame of combined data if any warehouses had valid inventory data.
+    5. If all warehouses returned empty, returnes a DataFrame with a single entry indicating empty data.
+
+    Parameters:
+    zone (str): The zone identifier for the session.
+    session_id (str): The session ID retrieved from the login; used for authentication.
+    warehouses (Dict[str, Any]): A dictionary containing warehouse data.
+    formatted_date (str): The date used for querying or labeling, formatted as 'YYYY/MM/DD'.
+
+    Returns:
+        Union[list[str], pd.DataFrame]:
+            - empty_warehouses: A list of empty warehouses.
+            - combined_df: A pandas DataFrame with the processed warehouse data.
+    """
     empty_warehouses = []
     dataframe_list = []
     warehouse = warehouses.get("Warehouses", {}).items()
@@ -90,7 +142,21 @@ def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], f
 
     return empty_warehouses, combined_df
 
-def fetch_data(zone, session_id, formatted_date, warehouse_code):
+def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_code: str) -> Union[Dict[str, Any], None]:
+    """
+    Calls the 'get_item_balance_by_location()' function from api.py with the provided parameters and returns its result. Refer to documentation of 'get_item_balance_by_location()' for more information.
+
+    Parameters:
+        zone (str): The zone string used for this session.
+        session_id (str): The session ID retrieved from the login; used for authentication.
+        formatted_date (str): The date used for querying or labeling, formatted as 'YYYY/MM/DD'.
+        warehouse_code (str): The unique warehouse identifier.
+
+    Returns:
+        Union[Dict[str, Any], None]:
+            - A dictionary representing the parsed JSON data from the response if available.
+            - None if no data is available or an error occurs in 'get_item_balance_by_location()'.
+    """
     return get_item_balance_by_location(
         base_date=formatted_date,
         zone=zone,
@@ -99,7 +165,16 @@ def fetch_data(zone, session_id, formatted_date, warehouse_code):
         warehouse_code=warehouse_code
     )
 
-def report_empty_warehouse(empty_warehouses) -> list:
+def report_empty_warehouse(empty_warehouses: str) -> list:
+    """
+    Stores a list of empty warehouses.
+
+    Parameters:
+        empty_warehouses (str): Name of warehouse that did not return any data.
+
+    Returns:
+        lst (list[str]): A list of empty warehouses.
+    """
     lst = []
     if empty_warehouses:
         for warehouse in empty_warehouses:
