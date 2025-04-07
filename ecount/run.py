@@ -1,7 +1,9 @@
+import asyncio
 import json
 import time
 import pandas as pd
 import logging
+import streamlit as st
 from typing import Union, Optional, Any, Dict, Tuple
 
 from dateutil import parser
@@ -13,7 +15,7 @@ from utils.logger import EcountLogger
 
 ecount_logger = EcountLogger(name="EcountLogger", filename="run.log", mode="w", level=logging.DEBUG)
 
-def has_inventory_data(response: dict) -> bool:
+async def has_inventory_data(response: dict) -> bool:
     """
     Checks if the response contains inventory data.
     
@@ -92,7 +94,9 @@ def load_warehouse_config() -> Optional[dict]:
         ecount_logger.error(f"Error reading config file: {e}")
         return None
 
-def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], formatted_date: str) -> list[str] | pd.DataFrame:
+# MAY ERROR DITO; TO DO: FIX THIS (something to do with serializing using pickle)
+@st.cache_data()
+async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], formatted_date: str) -> list[str] | pd.DataFrame:
     """
     Processes the data loaded from the warehouse configuration file and returns a list of empty warehouses and a pandas DataFrame of warehouses that contain data.
 
@@ -123,10 +127,10 @@ def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], f
             ecount_logger.info(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
             time.sleep(config.REQUEST_DELAY)
 
-        inventory_data = fetch_data(zone, session_id, formatted_date, warehouse_code)
+        inventory_data = await fetch_data(zone, session_id, formatted_date, warehouse_code)
 
         if inventory_data:
-            if has_inventory_data(inventory_data):
+            if await has_inventory_data(inventory_data):
                 df = export_to_df(inventory_data, warehouse_name, formatted_date)
                 dataframe_list.append(df)
                 ecount_logger.info(f"Exported data for {warehouse_code}:{warehouse_name}")
@@ -142,7 +146,7 @@ def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], f
 
     return empty_warehouses, combined_df
 
-def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_code: str) -> Union[Dict[str, Any], None]:
+async def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_code: str) -> Union[Dict[str, Any], None]:
     """
     Calls the `get_item_balance_by_location()` function from `api.py` with the provided parameters and returns its result. Refer to documentation of `get_item_balance_by_location()` for more information.
 
@@ -181,7 +185,21 @@ def report_empty_warehouse(empty_warehouses: str) -> list:
             lst.append(warehouse)
     return lst
 
+def run_async(coroutine):
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    if loop.is_running():
+        future = asyncio.ensure_future(coroutine)
+        return asyncio.get_event_loop().run_until_complete(future)
+    else:
+        return loop.run_until_complete(coroutine)
+
 def run():
+    st.title("GoParts Data")
     ecount_logger.info("Logging in...")
     zone, session_id = login()
 
@@ -197,16 +215,28 @@ def run():
     if not warehouses:
         return
     
-    empty_warehouses, df = process_warehouses(zone, session_id, warehouses, formatted_date)
-    total_warehouses = len(warehouses.get("Warehouses", {}))
-    if len(empty_warehouses) == total_warehouses:
-        ecount_logger.info("API response returns empty data for all warehouses.")
-        return
+    with st.spinner("Fetching data..."):
+        empty_warehouses, df = run_async(process_warehouses(zone, session_id, warehouses, formatted_date))
+        total_warehouses = len(warehouses.get("Warehouses", {}))
+        if len(empty_warehouses) == total_warehouses:
+            ecount_logger.info("API response returns empty data for all warehouses.")
+            return
+
+    st.success("Data fetched!")
+    st.dataframe(df)
+    st.write(f"Empty Warehouses: {empty_warehouses}")
     
+    # use caching
+    # here
+
+
     empty = report_empty_warehouse(empty_warehouses)
     ecount_logger.info(f"Empty Warehouses: {empty}")
     ecount_logger.info("\nDataframe:")
     ecount_logger.info(df)
 
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button("Download", csv, "data.csv", "text/csv")
+
     ecount_logger.info("Loading data into BigQuery...")
-    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
+    # load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
