@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 import time
 import pandas as pd
@@ -198,6 +199,22 @@ def run_async(coroutine):
     else:
         return loop.run_until_complete(coroutine)
 
+def get_download_link(df: pd.DataFrame, filename: str = "data.csv") -> str:
+    """
+    Generate a download link for a dataframe.
+
+    Parameters:
+        df (pd.DataFrame): A pandas dataframe to be read.
+        filename (str): The file name; Default is 'data.csv'.
+
+    Returns:
+        href (str): A string representing the generated link for the download file.
+    """
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV File</a>'
+    return href
+
 def run():
     st.title("GoParts Data")
     ecount_logger.info("Logging in...")
@@ -231,8 +248,7 @@ def run():
     ecount_logger.info("\nDataframe:")
     ecount_logger.info(df)
 
-    csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button("Download", csv, "data.csv", "text/csv")
+    st.markdown(get_download_link(df), unsafe_allow_html=True)
 
     ecount_logger.info("Loading data into BigQuery...")
-    # load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
+    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
