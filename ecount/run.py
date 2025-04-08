@@ -94,8 +94,7 @@ def load_warehouse_config() -> Optional[dict]:
         ecount_logger.error(f"Error reading config file: {e}")
         return None
 
-# MAY ERROR DITO; TO DO: FIX THIS (something to do with serializing using pickle)
-@st.cache_data()
+@st.cache_resource
 async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], formatted_date: str) -> list[str] | pd.DataFrame:
     """
     Processes the data loaded from the warehouse configuration file and returns a list of empty warehouses and a pandas DataFrame of warehouses that contain data.
@@ -146,6 +145,7 @@ async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, A
 
     return empty_warehouses, combined_df
 
+@st.cache_resource
 async def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_code: str) -> Union[Dict[str, Any], None]:
     """
     Calls the `get_item_balance_by_location()` function from `api.py` with the provided parameters and returns its result. Refer to documentation of `get_item_balance_by_location()` for more information.
@@ -225,10 +225,6 @@ def run():
     st.success("Data fetched!")
     st.dataframe(df)
     st.write(f"Empty Warehouses: {empty_warehouses}")
-    
-    # use caching
-    # here
-
 
     empty = report_empty_warehouse(empty_warehouses)
     ecount_logger.info(f"Empty Warehouses: {empty}")
