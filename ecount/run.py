@@ -230,10 +230,10 @@ def get_cached_warehouse_data(zone: str, session_id: str, warehouses: str, forma
     Streamlit's `@st.cache_data` to avoid redundant computations on reruns.
 
     Parameters:
-        zone (str): The warehouse zone identifier.
-        session_id (str): A unique session ID for API authentication or user tracking.
+        zone (str): The zone string used for this session.
+        session_id (str): The session ID retrieved from the login; used for authentication.
         warehouses (str): A string (likely JSON or comma-separated) representing warehouses to process.
-        formatted_date (str): A date string used for querying or filtering records.
+        formatted_date (str): The date used for querying or labeling, formatted as `YYYY/MM/DD`.
 
     Returns:
         tuple[list[str], pd.DataFrame]: 
