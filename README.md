@@ -6,7 +6,7 @@ Automated solution to extract data from Ecount.
 ### To do:
 
 - [x] Add Streamlit
-    - [ ] Add downloadable dataframe of extracted data from Ecount API.
+    - [x] Add downloadable dataframe of extracted data from Ecount API.
         - [ ] Fix pickle serialization
 
 - [ ] Handle empty responses from API
