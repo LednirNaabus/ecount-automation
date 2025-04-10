@@ -1,6 +1,8 @@
 import requests
+import streamlit as st
 from typing import Optional, Dict, Any
 
+@st.cache_data
 def get_zone(company_code: str) -> Optional[Dict[str, Any]]:
     """
     Sends a POST request to Ecount `Zone` API. For more documentation about the Ecount OpenAPI, visit their official [documentation](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
@@ -28,6 +30,7 @@ def get_zone(company_code: str) -> Optional[Dict[str, Any]]:
         print(f"API Request failed: {e}")
         return None
     
+@st.cache_data
 def login_ecount(company_code: str, user_id: str, api_cert_key: str, lang: str, zone: str) -> Optional[Dict[str, Any]]:
     """
     Sends a POST request to Ecount `Login` API. For more documentation about the Ecount OpenAPI, visit their official [documentation](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
@@ -68,6 +71,7 @@ def login_ecount(company_code: str, user_id: str, api_cert_key: str, lang: str, 
         print(f"API Request failed: {e}")
         return None
     
+@st.cache_data
 def get_item_balance_by_location(base_date: str, zone: str, session_id: str, is_single: bool = True, warehouse_code: str = None, product_code: str = None) -> Optional[Dict[str, Any]]:
     """
     Sends a POST request to Ecount `Inventory Balance` API. It interacts with the `Inventory Balance` API to retrieve data for specified warehouse or product code on a certain date. For more documentation about the Ecount OpenAPI, visit their official [documentation](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
