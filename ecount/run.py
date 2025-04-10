@@ -9,6 +9,7 @@ from typing import Union, Optional, Any, Dict, Tuple
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
+from utils.async_utils import run_async
 from utils.exporter import export_to_df
 from utils.bq_utils import load_data_to_bq
 from config import config
@@ -203,21 +204,6 @@ def report_empty_warehouse(empty_warehouses: str) -> list:
             lst.append(warehouse)
     return lst
 
-def run_async(coroutine_func, *args, **kwargs):
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    coroutine = coroutine_func(*args, **kwargs)
-
-    if loop.is_running():
-        future = asyncio.ensure_future(coroutine)
-        return asyncio.get_event_loop().run_until_complete(future)
-    else:
-        return loop.run_until_complete(coroutine)
-
 def get_download_link(df: pd.DataFrame, filename: str = "data.csv") -> str:
     """
     Generate a download link for a dataframe.
@@ -236,9 +222,35 @@ def get_download_link(df: pd.DataFrame, filename: str = "data.csv") -> str:
 
 @st.cache_data
 def get_cached_warehouse_data(zone: str, session_id: str, warehouses: str, formatted_date: str) -> tuple[list[str], pd.DataFrame]:
+    """
+    Runs and caches the result of the asynchronous `process_warehouses` function.
+
+    This function wraps `process_warehouses()` using `run_async()` to execute
+    the async logic in a synchronous context. The result is cached with
+    Streamlit's `@st.cache_data` to avoid redundant computations on reruns.
+
+    Parameters:
+        zone (str): The warehouse zone identifier.
+        session_id (str): A unique session ID for API authentication or user tracking.
+        warehouses (str): A string (likely JSON or comma-separated) representing warehouses to process.
+        formatted_date (str): A date string used for querying or filtering records.
+
+    Returns:
+        tuple[list[str], pd.DataFrame]: 
+            - A list of warehouse identifiers that are empty.
+            - A pandas DataFrame containing the processed warehouse data.
+    """
     return run_async(process_warehouses, zone, session_id, warehouses, formatted_date)
 
 def download_callback():
+    """
+    This function sets a flag in `st.session_state` to indicate that the 
+    download has been triggered. It can be used to control UI behavior or 
+    conditional logic (e.g. show a message or trigger another process).
+
+    Side Effects:
+        Sets `st.session_state.downloaded` to True.
+    """
     st.session_state.downloaded = True
 
 def run():
