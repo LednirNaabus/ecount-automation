@@ -16,6 +16,19 @@ from utils.logger import EcountLogger
 
 ecount_logger = EcountLogger(name="EcountLogger", filename="run.log", mode="w", level=logging.DEBUG)
 
+# Initialize state sessions
+if 'downloaded' not in st.session_state:
+    st.session_state['downloaded'] = False
+
+if 'data_fetched' not in st.session_state:
+    st.session_state['data_fetched'] = False
+
+if 'df' not in st.session_state:
+    st.session_state['df'] = None
+
+if 'empty_warehouses' not in st.session_state:
+    st.session_state['empty_warehouses'] = None
+
 async def has_inventory_data(response: dict) -> bool:
     """
     Checks if the response contains inventory data.
@@ -32,6 +45,7 @@ async def has_inventory_data(response: dict) -> bool:
     else:
         return False
 
+@st.cache_data
 def login() -> Tuple[Optional[str], Optional[str]]:
     """
     Logs into the system and retrieves the `zone` and `session_id`.
@@ -69,6 +83,7 @@ def login() -> Tuple[Optional[str], Optional[str]]:
 
     return zone, session_id
 
+@st.cache_data
 def get_formatted_date(base_date: str) -> str:
     """
     Parses a date string and returns it in `YYYY/MM/DD` format.
@@ -81,6 +96,7 @@ def get_formatted_date(base_date: str) -> str:
     parsed_date = parser.parse(base_date)
     return parsed_date.strftime("%Y%m%d")
 
+@st.cache_data
 def load_warehouse_config() -> Optional[dict]:
     """
     Loads and parses the warehouse JSON configuration file.
@@ -170,6 +186,7 @@ async def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_
         warehouse_code=warehouse_code
     )
 
+@st.cache_data
 def report_empty_warehouse(empty_warehouses: str) -> list:
     """
     Stores a list of empty warehouses.
@@ -186,12 +203,14 @@ def report_empty_warehouse(empty_warehouses: str) -> list:
             lst.append(warehouse)
     return lst
 
-def run_async(coroutine):
+def run_async(coroutine_func, *args, **kwargs):
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+
+    coroutine = coroutine_func(*args, **kwargs)
 
     if loop.is_running():
         future = asyncio.ensure_future(coroutine)
@@ -215,9 +234,15 @@ def get_download_link(df: pd.DataFrame, filename: str = "data.csv") -> str:
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV File</a>'
     return href
 
+@st.cache_data
+def get_cached_warehouse_data(zone: str, session_id: str, warehouses: str, formatted_date: str) -> tuple[list[str], pd.DataFrame]:
+    return run_async(process_warehouses, zone, session_id, warehouses, formatted_date)
+
+def download_callback():
+    st.session_state.downloaded = True
+
 def run():
     st.title("GoParts Data")
-    ecount_logger.info("Logging in...")
     zone, session_id = login()
 
     if not (zone and session_id):
@@ -232,12 +257,16 @@ def run():
     if not warehouses:
         return
     
-    with st.spinner("Fetching data..."):
-        empty_warehouses, df = run_async(process_warehouses(zone, session_id, warehouses, formatted_date))
-        total_warehouses = len(warehouses.get("Warehouses", {}))
-        if len(empty_warehouses) == total_warehouses:
-            ecount_logger.info("API response returns empty data for all warehouses.")
-            return
+    if not st.session_state['data_fetched']:
+        with st.spinner("Fetching data..."):
+            empty_warehouses, df = get_cached_warehouse_data(zone, session_id, warehouses, formatted_date)
+            total_warehouses = len(warehouses.get("Warehouses", {}))
+            if len(empty_warehouses) == total_warehouses:
+                ecount_logger.info("API response returned empty data for all warehouses.")
+                return
+    else:
+        df = st.session_state['df']
+        empty_warehouses = df.session_state['empty_warehouses']
 
     st.success("Data fetched!")
     st.dataframe(df)
@@ -248,7 +277,16 @@ def run():
     ecount_logger.info("\nDataframe:")
     ecount_logger.info(df)
 
-    st.markdown(get_download_link(df), unsafe_allow_html=True)
+    csv = df.to_csv(index=False).encode('utf-8')
 
+    if not st.session_state['downloaded']:
+        st.download_button("Download", csv, "data.csv", "text/csv", key='download_button', on_click=download_callback)
+    else:
+        st.success("File Downloaded.")
+        st.button("Download again", key="download_again")
+        st.session_state['downloaded'] = False
+
+    # If user clicks download button, Streamlit will re-run the app
+    # With that context in mind, load_data_to_bq() will re-run as well
     ecount_logger.info("Loading data into BigQuery...")
     load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
