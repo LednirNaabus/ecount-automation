@@ -1,0 +1,23 @@
+{
+    "COMPANY_CODE" : "0000",
+    "USER_ID" : "user_id",
+    "LAN_TYPE" : "en-US",
+    "BASE_DATE" : "2025-01-01",
+    "BIGQUERY_INFO" : {
+        "project_id" : "project_id",
+        "dataset_name" : "MySample_dataset",
+        "table_name" : "sample_table"
+    },
+    "Warehouses" : {
+        "00001" : "JHM Garage WH",
+        "00003" : "Chyllzach Auto Care WH",
+        "00006" : "Single Plane Vehicle WH",
+        "00013" : "Global Care Enterprise WH",
+        "00014" : "RB Motorz WH",
+        "00015" : "Etan Garage WH",
+        "00016" : "Don Mekaniko WH",
+        "00017" : "JRCE Garage WH",
+        "00018" : "Marlon Auto Care WH",
+        "00019" : "Mechanigo Carmona WH"
+    }
+}
