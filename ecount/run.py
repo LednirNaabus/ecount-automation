@@ -178,6 +178,7 @@ async def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_
         Union[Dict[str, Any], None]:
             - A dictionary representing the parsed JSON data from the response if available.
             - None if no data is available or an error occurs in `get_item_balance_by_location()`.
+            - Schema for the response: WH_CD, WH_DES, PROD_CD, PROD_DES, PROD_SIZE_DES, BAL_QTY
     """
     return get_item_balance_by_location(
         base_date=formatted_date,
