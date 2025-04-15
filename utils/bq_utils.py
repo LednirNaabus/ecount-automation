@@ -54,5 +54,5 @@ def load_data_to_bq(logger: EcountLogger, df: pd.DataFrame , project_id: str, da
         logger.info(f"Successfully loaded {df.shape[0]} rows into {table_id}")
         return f"Loaded {df.shape[0]} rows into {table_id}"
     except Exception as e:
-        logger.error(f"Error uploading data to BigQuery: {e}", exc_info=True)
+        logger.error(f"Error uploading data to BigQuery: {e}")
         return f"Failed to upload data: {e}"
