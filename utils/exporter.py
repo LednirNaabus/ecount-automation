@@ -14,8 +14,9 @@ def export_to_excel(writer, data, warehouse_name, date, file_ext: Literal['.xlsx
 def export_to_df(data: Dict[str, Any], date: str) -> pd.DataFrame:
     df = pd.DataFrame(data["Data"]["Result"])
     df['Date'] = datetime.strptime(date, "%Y%m%d").date()
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    df['month_year'] = df['Date'].dt.to_period('M')
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['month_year'] = df['Date'].dt.to_period('M').dt.to_timestamp().dt.date
+    df['BAL_QTY'] = pd.to_numeric(df['BAL_QTY'])
     df['stock_in'] = 0
     df['stock_out'] = 0
 

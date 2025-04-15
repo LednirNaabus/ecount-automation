@@ -6,6 +6,8 @@ import pandas as pd
 import logging
 import streamlit as st
 from typing import Union, Optional, Any, Dict, Tuple
+from google.cloud import bigquery
+import pandas_gbq
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
@@ -289,6 +291,9 @@ def run():
     ecount_logger.info(f"Empty Warehouses: {empty}")
     ecount_logger.info("\nDataframe:")
     ecount_logger.info(df)
+    
+    print(df.Date)
+    print(type(df.Date))
 
     csv = df.to_csv(index=False).encode('utf-8')
 
@@ -302,4 +307,15 @@ def run():
     # If user clicks download button, Streamlit will re-run the app
     # With that context in mind, load_data_to_bq() will re-run as well
     ecount_logger.info("Loading data into BigQuery...")
-    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME)
+    schema = [
+        bigquery.SchemaField("warehouse", "STRING"),
+        bigquery.SchemaField("item_code", "STRING"),
+        bigquery.SchemaField("item_name", "STRING"),
+        bigquery.SchemaField("spec", "STRING"),
+        bigquery.SchemaField("balance", "FLOAT"),
+        bigquery.SchemaField("Date", "DATE"),
+        bigquery.SchemaField("month_year", "DATE"),
+        bigquery.SchemaField("stock_in", "INTEGER"),
+        bigquery.SchemaField("stock_out", "INTEGER"),
+    ]
+    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema)
