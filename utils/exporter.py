@@ -14,4 +14,17 @@ def export_to_excel(writer, data, warehouse_name, date, file_ext: Literal['.xlsx
 def export_to_df(data: Dict[str, Any], warehouse_name: str, date: str) -> pd.DataFrame:
     df = pd.DataFrame(data["Data"]["Result"])
     df['Date'] = datetime.strptime(date, "%Y%m%d").date()
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['month_year'] = df['Date'].dt.to_period('M')
+    df['stock_in'] = 0
+    df['stock_out'] = 0
+
+    df = df.drop("WH_CD", axis='columns')
+    df = df.rename(columns={
+        "WH_DES" : "warehouse",
+        "PROD_CD" : "item_code",
+        "PROD_DES" : "item_name",
+        "PROD_SIZE_DES" : "spec",
+        "BAL_QTY" : "balance"
+    })   
     return df
