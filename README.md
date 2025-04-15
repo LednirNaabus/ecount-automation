@@ -26,3 +26,5 @@ Automated solution to extract data from Ecount.
 - [x] Add logging
 
     - [ ] Refactor
+
+- [ ] Implement Google Sheets formula to Data Frame
