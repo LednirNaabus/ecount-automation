@@ -11,7 +11,7 @@ def export_to_excel(writer, data, warehouse_name, date, file_ext: Literal['.xlsx
     elif file_ext == '.csv':
         df.to_csv(f"inventory_balance_{warehouse_name}_asof_{date}.csv", index=False)
 
-def export_to_df(data: Dict[str, Any], warehouse_name: str, date: str) -> pd.DataFrame:
+def export_to_df(data: Dict[str, Any], date: str) -> pd.DataFrame:
     df = pd.DataFrame(data["Data"]["Result"])
     df['Date'] = datetime.strptime(date, "%Y%m%d").date()
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce')

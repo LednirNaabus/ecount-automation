@@ -148,7 +148,7 @@ async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, A
 
         if inventory_data:
             if await has_inventory_data(inventory_data):
-                df = export_to_df(inventory_data, warehouse_name, formatted_date)
+                df = export_to_df(inventory_data, formatted_date)
                 dataframe_list.append(df)
                 ecount_logger.info(f"Exported data for {warehouse_code}:{warehouse_name}")
             else:
