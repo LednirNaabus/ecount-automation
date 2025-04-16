@@ -7,6 +7,7 @@ import logging
 import streamlit as st
 from typing import Union, Optional, Any, Dict, Tuple
 from google.cloud import bigquery
+from datetime import datetime
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
@@ -260,61 +261,65 @@ def run():
     zone, session_id = login()
 
     if not (zone and session_id):
+        st.write("Login failed. Try again.")
         ecount_logger.error("Login failed.")
         return
 
     ecount_logger.info("Login success!")
 
-    formatted_date = get_formatted_date(config.BASE_DATE)
+    date_input = st.date_input(label="Enter base date:")
+    formatted_base_date = get_formatted_date(str(date_input))
     ecount_logger.info("Loading warehouse configuration file...")
     warehouses = load_warehouse_config()
     if not warehouses:
         return
+
+    if st.button("Submit"):
     
-    if not st.session_state['data_fetched']:
-        with st.spinner("Fetching data..."):
-            empty_warehouses, df = get_cached_warehouse_data(zone, session_id, warehouses, formatted_date)
-            total_warehouses = len(warehouses.get("Warehouses", {}))
-            if len(empty_warehouses) == total_warehouses:
-                ecount_logger.info("API response returned empty data for all warehouses.")
-                return
-    else:
-        df = st.session_state['df']
-        empty_warehouses = df.session_state['empty_warehouses']
+        if not st.session_state['data_fetched']:
+            with st.spinner("Fetching data..."):
+                empty_warehouses, df = get_cached_warehouse_data(zone, session_id, warehouses, formatted_base_date)
+                total_warehouses = len(warehouses.get("Warehouses", {}))
+                if len(empty_warehouses) == total_warehouses:
+                    ecount_logger.info("API response returned empty data for all warehouses.")
+                    return
+        else:
+            df = st.session_state['df']
+            empty_warehouses = df.session_state['empty_warehouses']
 
-    st.success("Data fetched!")
-    st.dataframe(df)
-    st.write(f"Empty Warehouses: {empty_warehouses}")
+        st.success("Data fetched!")
+        st.dataframe(df)
+        st.write(f"Empty Warehouses: {empty_warehouses}")
 
-    empty = report_empty_warehouse(empty_warehouses)
-    ecount_logger.info(f"Empty Warehouses: {empty}")
-    ecount_logger.info("\nDataframe:")
-    ecount_logger.info(df)
-    
-    print(df.Date)
-    print(type(df.Date))
+        empty = report_empty_warehouse(empty_warehouses)
+        ecount_logger.info(f"Empty Warehouses: {empty}")
+        ecount_logger.info("\nDataframe:")
+        ecount_logger.info(df)
+        
+        print(df.Date)
+        print(type(df.Date))
 
-    csv = df.to_csv(index=False).encode('utf-8')
+        csv = df.to_csv(index=False).encode('utf-8')
 
-    if not st.session_state['downloaded']:
-        st.download_button("Download", csv, "data.csv", "text/csv", key='download_button', on_click=download_callback)
-    else:
-        st.success("File Downloaded.")
-        st.button("Download again", key="download_again")
-        st.session_state['downloaded'] = False
+        if not st.session_state['downloaded']:
+            st.download_button("Download", csv, "data.csv", "text/csv", key='download_button', on_click=download_callback)
+        else:
+            st.success("File Downloaded.")
+            st.button("Download again", key="download_again")
+            st.session_state['downloaded'] = False
 
-    # If user clicks download button, Streamlit will re-run the app
-    # With that context in mind, load_data_to_bq() will re-run as well
-    ecount_logger.info("Loading data into BigQuery...")
-    schema = [
-        bigquery.SchemaField("warehouse", "STRING"),
-        bigquery.SchemaField("item_code", "STRING"),
-        bigquery.SchemaField("item_name", "STRING"),
-        bigquery.SchemaField("spec", "STRING"),
-        bigquery.SchemaField("balance", "FLOAT"),
-        bigquery.SchemaField("Date", "DATE"),
-        bigquery.SchemaField("month_year", "DATE"),
-        bigquery.SchemaField("stock_in", "INTEGER"),
-        bigquery.SchemaField("stock_out", "INTEGER"),
-    ]
-    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema)
+        # If user clicks download button, Streamlit will re-run the app
+        # With that context in mind, load_data_to_bq() will re-run as well
+        ecount_logger.info("Loading data into BigQuery...")
+        schema = [
+            bigquery.SchemaField("warehouse", "STRING"),
+            bigquery.SchemaField("item_code", "STRING"),
+            bigquery.SchemaField("item_name", "STRING"),
+            bigquery.SchemaField("spec", "STRING"),
+            bigquery.SchemaField("balance", "FLOAT"),
+            bigquery.SchemaField("Date", "DATE"),
+            bigquery.SchemaField("month_year", "DATE"),
+            bigquery.SchemaField("stock_in", "INTEGER"),
+            bigquery.SchemaField("stock_out", "INTEGER"),
+        ]
+        load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema)
