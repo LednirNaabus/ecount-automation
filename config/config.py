@@ -33,7 +33,6 @@ COMPANY_CODE = json_config.get('COMPANY_CODE')
 USER_ID = json_config.get('USER_ID')
 LAN_TYPE = json_config.get("LAN_TYPE")
 API_CERT_KEY = os.getenv('API_CERT_KEY')
-BASE_DATE = json_config.get('BASE_DATE')
 SHEET_NAME = json_config.get('SHEET_NAME')
 WORKSHEET_NAME = json_config.get('INGESTION_WORKSHEET_NAME')
 GCLOUD_PROJECT_ID = json_config.get('BIGQUERY_INFO')['project_id']
