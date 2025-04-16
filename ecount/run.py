@@ -7,7 +7,6 @@ import logging
 import streamlit as st
 from typing import Union, Optional, Any, Dict, Tuple
 from google.cloud import bigquery
-import pandas_gbq
 
 from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
