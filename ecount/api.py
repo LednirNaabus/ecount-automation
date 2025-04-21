@@ -18,7 +18,7 @@ def get_zone(company_code: str) -> Optional[Dict[str, Any]]:
             - A dictionary representing the parsed JSON response from the Ecount OpenAPI if the request is successful.
             - None if the request fails or an exception is raised.
     """
-    api_url = "https://sboapi.ecount.com/OAPI/V2/Zone"
+    api_url = "https://oapi.ecount.com/OAPI/V2/Zone"
     payload = {
         "COM_CODE" : company_code
     }
@@ -55,7 +55,7 @@ def login_ecount(company_code: str, user_id: str, api_cert_key: str, lang: str, 
     Returns:
         Optional[Dict[str, Any]]: A dictionary representing the parsed JSON response from the API if the request is successful.
     """
-    api_url = f"https://sboapi{zone}.ecount.com/OAPI/V2/OAPILogin"
+    api_url = f"https://oapi{zone}.ecount.com/OAPI/V2/OAPILogin"
     payload = {
         "COM_CODE" : company_code,
         "USER_ID" : user_id,
@@ -93,7 +93,7 @@ def get_item_balance_by_location(base_date: str, zone: str, session_id: str, is_
     if is_single:
         if product_code is None:
             raise ValueError("product_code must be provided when is_single is set to True.")
-        api_url = f"https://sboapi{zone}.ecount.com/OAPI/V2/InventoryBalance/ViewInventoryBalanceStatusByLocation?SESSION_ID={session_id}"
+        api_url = f"https://oapi{zone}.ecount.com/OAPI/V2/InventoryBalance/ViewInventoryBalanceStatusByLocation?SESSION_ID={session_id}"
         payload = {
             "PROD_CD": product_code,
             "BASE_DATE": base_date
@@ -102,7 +102,7 @@ def get_item_balance_by_location(base_date: str, zone: str, session_id: str, is_
         if warehouse_code is None:
             raise ValueError("warehouse_code must be provided when is_single is False.")
             
-        api_url = f"https://sboapi{zone}.ecount.com/OAPI/V2/InventoryBalance/GetListInventoryBalanceStatusByLocation?SESSION_ID={session_id}"
+        api_url = f"https://oapi{zone}.ecount.com/OAPI/V2/InventoryBalance/GetListInventoryBalanceStatusByLocation?SESSION_ID={session_id}"
         payload = {
             "BASE_DATE": base_date,
             "WH_CD": warehouse_code
