@@ -74,7 +74,6 @@ def login() -> Tuple[Optional[str], Optional[str]]:
     )
 
     if not login_response or "Data" not in login_response or "Datas" not in login_response["Data"]:
-        ecount_logger.error("Login failed.")
         return zone, None
 
     session_id = login_response["Data"]["Datas"].get("SESSION_ID")
@@ -295,9 +294,6 @@ def run():
         ecount_logger.info("\nDataframe:")
         ecount_logger.info(df)
         
-        print(df.Date)
-        print(type(df.Date))
-
         csv = df.to_csv(index=False).encode('utf-8')
 
         if not st.session_state['downloaded']:
