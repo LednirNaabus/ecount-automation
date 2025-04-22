@@ -1,9 +1,7 @@
 from google.cloud import bigquery
-from google.oauth2 import service_account
 from google.cloud.exceptions import NotFound
-import json
-import os
-import logging
+from google.cloud.bigquery import SchemaField
+from typing import List
 import pandas as pd
 
 from config import config
@@ -66,6 +64,49 @@ def ensure_table(logger: EcountLogger, project_id: str, dataset_name: str, table
         table = bigquery.Table(table_id, schema=schema) if schema else bigquery.Table(table_id)
         client.create_table(table)
         logger.info(f"Created table '{table_id}'")
+
+def generate_schema(df: pd.DataFrame) -> List[SchemaField]:
+    """
+    Helper function for generating schema in BigQuery tables.
+
+    Parameters:
+        df (pd.DataFrame): Pandas dataframe object that will be checked.
+
+    Returns:
+        schema (List[SchemaField]): The generated schema.
+    """
+    TYPE_MAPPING = {
+        "i": "INTEGER",
+        "u": "NUMERIC",
+        "b": "BOOLEAN",
+        "f": "FLOAT",
+        "O": "STRING",
+        "S": "STRING",
+        "U": "STRING",
+        "M": "TIMESTAMP",
+    }
+    
+    schema = []
+    for column, dtype in df.dtypes.items():
+        val = df[column].iloc[0]
+        mode = "REPEATED" if isinstance(val, list) else "NULLABLE"
+
+        if isinstance(val, dict) or (mode == "REPEATED" and isinstance(val[0], dict)):
+            fields = generate_schema(pd.json_normalize(val))
+        else:
+            fields = ()
+        
+        type = "RECORD" if fields else TYPE_MAPPING.get(dtype.kind)
+        schema.append(
+            SchemaField(
+                name=column,
+                field_type=type,
+                mode=mode,
+                fields=fields,
+            )
+        )
+
+    return schema
 
 def load_data_to_bq(logger: EcountLogger, df: pd.DataFrame , project_id: str, dataset_name: str, table_name: str, write_mode: str ="WRITE_APPEND", schema=None):
     """
