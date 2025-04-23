@@ -8,7 +8,4 @@ st.set_page_config(
 )
 
 if __name__ == "__main__":
-    """
-    Main entry point for the script/program.
-    """
     run()
