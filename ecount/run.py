@@ -311,7 +311,7 @@ def run():
             bigquery.SchemaField("item_code", "STRING"),
             bigquery.SchemaField("item_name", "STRING"),
             bigquery.SchemaField("spec", "STRING"),
-            bigquery.SchemaField("Date", "DATE"),
+            bigquery.SchemaField("date", "DATE"),
             bigquery.SchemaField("month_year", "DATE"),
             bigquery.SchemaField("balance", "INTEGER"),
             bigquery.SchemaField("stock_in", "INTEGER"),
