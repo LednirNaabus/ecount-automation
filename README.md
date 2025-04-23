@@ -37,6 +37,8 @@ Automated solution to extract data from Ecount.
 
         - `warehouse`, `item_code`, `item_name`, `spec`, `Date`, `stock_in`, `stock_out`, `day_balance (balance)`, `out_of_stock_event`, `prev_balance`, `month_year`
 
+- [ ] Fix logic in `compute_stock`
+
 https://www.reddit.com/r/learnpython/comments/l9spb2/trying_to_write_code_that_subtracts_previous_row/
 
 https://www.reddit.com/r/learnpython/comments/kjgl6j/how_do_i_access_a_previous_row_when_iterating/
