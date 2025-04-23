@@ -12,7 +12,8 @@ from dateutil import parser
 from ecount.api import get_zone, login_ecount, get_item_balance_by_location
 from utils.async_utils import run_async
 from utils.exporter import export_to_df
-from utils.bq_utils import load_data_to_bq
+from utils.compute import compute_stock
+from utils.bq_utils import load_data_to_bq, sql_query_bq
 from config import config
 from utils.logger import EcountLogger
 
@@ -318,3 +319,18 @@ def run():
             bigquery.SchemaField("stock_out", "INTEGER"),
         ]
         load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema)
+        df1 = sql_query_bq(f"SELECT * FROM `{config.GCLOUD_PROJECT_ID}.{config.BQ_DATASET_NAME}.{config.BQ_TABLE_NAME}`")
+        new_df = compute_stock(df1)
+        schema2 = [
+            bigquery.SchemaField("warehouse", "STRING"),
+            bigquery.SchemaField("item_code", "STRING"),
+            bigquery.SchemaField("item_name", "STRING"),
+            bigquery.SchemaField("spec", "STRING"),
+            bigquery.SchemaField("date", "DATE"),
+            bigquery.SchemaField("month_year", "DATE"),
+            bigquery.SchemaField("prev_balance", "INTEGER"),
+            bigquery.SchemaField("balance", "INTEGER"),
+            bigquery.SchemaField("stock_in", "INTEGER"),
+            bigquery.SchemaField("stock_out", "INTEGER"),
+        ]
+        load_data_to_bq(ecount_logger, new_df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, "JHM_final", schema=schema2)
