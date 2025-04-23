@@ -147,3 +147,9 @@ def load_data_to_bq(logger: EcountLogger, df: pd.DataFrame , project_id: str, da
     except Exception as e:
         logger.error(f"Error uploading data to BigQuery: {e}")
         return f"Failed to upload data: {e}"
+
+def sql_query_bq(query):
+    client = get_client()['client']
+    query_job = client.query(query)
+    df = query_job.to_dataframe()
+    return df
