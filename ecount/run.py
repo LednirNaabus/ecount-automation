@@ -307,9 +307,10 @@ def run():
         # If user clicks download button, Streamlit will re-run the app
         # With that context in mind, load_data_to_bq() will re-run as well
         ecount_logger.info("Loading data into BigQuery...")
-        schema1 = generate_schema(df)
-        load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema1)
-        df1 = sql_query_bq(f"SELECT * FROM `{config.GCLOUD_PROJECT_ID}.{config.BQ_DATASET_NAME}.{config.BQ_TABLE_NAME}`")
-        new_df = apply_computation_stock(df1)
-        schema2 = generate_schema(new_df)
-        load_data_to_bq(ecount_logger, new_df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, write_mode="WRITE_TRUNCATE", schema=schema2)
+        with st.spinner("Loading data into BigQuery, please wait before making another request.", show_time=True):
+            schema1 = generate_schema(df)
+            load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema1)
+            df1 = sql_query_bq(f"SELECT * FROM `{config.GCLOUD_PROJECT_ID}.{config.BQ_DATASET_NAME}.{config.BQ_TABLE_NAME}`")
+            new_df = apply_computation_stock(df1)
+            schema2 = generate_schema(new_df)
+            load_data_to_bq(ecount_logger, new_df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, write_mode="WRITE_TRUNCATE", schema=schema2)
