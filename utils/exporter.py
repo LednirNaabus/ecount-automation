@@ -16,10 +16,10 @@ def export_to_df(data: Dict[str, Any], date: str) -> pd.DataFrame:
     df = pd.DataFrame(data["Data"]["Result"])
     df['date'] = datetime.strptime(date, "%Y%m%d").date()
     df['date'] = pd.to_datetime(df['date'])
-    df['month_year'] = df['date'].dt.to_period('M').dt.to_timestamp().dt.date
     df['BAL_QTY'] = pd.to_numeric(df['BAL_QTY'])
     df = df.sort_values(by='date')
     df[['stock_in', 'stock_out']] = 0
+    df[['stock_in', 'stock_out']] = df[['stock_in', 'stock_out']].astype(float)
 
     df.drop(columns=['WH_CD'], inplace=True)
     df = df.rename(columns={
