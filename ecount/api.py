@@ -1,8 +1,6 @@
 import requests
-import streamlit as st
 from typing import Optional, Dict, Any
 
-@st.cache_data
 def get_zone(company_code: str) -> Optional[Dict[str, Any]]:
     """
     Sends a POST request to Ecount `Zone` API. For more documentation about the Ecount OpenAPI, visit their official [documentation](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
@@ -30,7 +28,6 @@ def get_zone(company_code: str) -> Optional[Dict[str, Any]]:
         print(f"API Request failed: {e}")
         return None
     
-@st.cache_data
 def login_ecount(company_code: str, user_id: str, api_cert_key: str, lang: str, zone: str) -> Optional[Dict[str, Any]]:
     """
     Sends a POST request to Ecount `Login` API. For more documentation about the Ecount OpenAPI, visit their official [documentation](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
@@ -71,7 +68,6 @@ def login_ecount(company_code: str, user_id: str, api_cert_key: str, lang: str, 
         print(f"API Request failed: {e}")
         return None
     
-@st.cache_data
 def get_item_balance_by_location(base_date: str, zone: str, session_id: str, is_single: bool = True, warehouse_code: str = None, product_code: str = None) -> Optional[Dict[str, Any]]:
     """
     Sends a POST request to Ecount `Inventory Balance` API. It interacts with the `Inventory Balance` API to retrieve data for specified warehouse or product code on a certain date. For more documentation about the Ecount OpenAPI, visit their official [documentation](https://sboapi.ecount.com/ECERP/OAPI/OAPIView?lan_type=en-PH#).
@@ -108,10 +104,31 @@ def get_item_balance_by_location(base_date: str, zone: str, session_id: str, is_
             "WH_CD": warehouse_code
         }
 
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    
+    full_url = f"{api_url}?SESSION_ID={session_id}"
+
     try:
-        response = requests.post(api_url, json=payload)
+
+        print(f"Making request to: {full_url}")
+        print(f"Headers: {headers}")
+        print(f"Payload: {payload}")
+
+        response = requests.post(api_url, json=payload, headers=headers)
+
+        print(f"Response: {response.status_code}")
+        print(f"Response headers: {response.headers}")
+        print(f"Response body: {response.text}")
+
+        if response.status_code == 412:
+            print(f"412 Precondition Failed: {response.text}")
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"API Request failed: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response content: {e.response.text}")
         return None

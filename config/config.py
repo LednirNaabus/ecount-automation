@@ -38,5 +38,6 @@ WORKSHEET_NAME = json_config.get('INGESTION_WORKSHEET_NAME')
 GCLOUD_PROJECT_ID = json_config.get('BIGQUERY_INFO')['project_id']
 BQ_DATASET_NAME = json_config.get('BIGQUERY_INFO')['dataset_name']
 BQ_TABLE_NAME = json_config.get('BIGQUERY_INFO')['table_name']
+BASE_DATE = json_config.get('BASE_DATE')
 
 REQUEST_DELAY = 5

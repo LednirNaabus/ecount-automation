@@ -3,7 +3,6 @@ import json
 import time
 import pandas as pd
 import logging
-import streamlit as st
 from typing import Union, Optional, Any, Dict, Tuple
 from google.cloud import bigquery
 from datetime import datetime
@@ -18,19 +17,6 @@ from config import config
 from utils.logger import EcountLogger
 
 ecount_logger = EcountLogger(name="EcountLogger", filename="run.log", mode="w", level=logging.DEBUG)
-
-# Initialize state sessions
-if 'downloaded' not in st.session_state:
-    st.session_state['downloaded'] = False
-
-if 'data_fetched' not in st.session_state:
-    st.session_state['data_fetched'] = False
-
-if 'df' not in st.session_state:
-    st.session_state['df'] = None
-
-if 'empty_warehouses' not in st.session_state:
-    st.session_state['empty_warehouses'] = None
 
 async def has_inventory_data(response: dict) -> bool:
     """
@@ -48,7 +34,6 @@ async def has_inventory_data(response: dict) -> bool:
     else:
         return False
 
-@st.cache_data
 def login() -> Tuple[Optional[str], Optional[str]]:
     """
     Logs into the system and retrieves the `zone` and `session_id`.
@@ -85,7 +70,6 @@ def login() -> Tuple[Optional[str], Optional[str]]:
 
     return zone, session_id
 
-@st.cache_data
 def get_formatted_date(base_date: str) -> str:
     """
     Parses a date string and returns it in `YYYY/MM/DD` format.
@@ -98,7 +82,6 @@ def get_formatted_date(base_date: str) -> str:
     parsed_date = parser.parse(base_date)
     return parsed_date.strftime("%Y%m%d")
 
-@st.cache_data
 def load_warehouse_config() -> Optional[dict]:
     """
     Loads and parses the warehouse JSON configuration file.
@@ -113,7 +96,6 @@ def load_warehouse_config() -> Optional[dict]:
         ecount_logger.error(f"Error reading config file: {e}")
         return None
 
-@st.cache_resource
 async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, Any], formatted_date: str) -> list[str] | pd.DataFrame:
     """
     Processes the data loaded from the warehouse configuration file and returns a list of empty warehouses and a pandas DataFrame of warehouses that contain data.
@@ -139,23 +121,62 @@ async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, A
     empty_warehouses = []
     dataframe_list = []
     warehouse = warehouses.get("Warehouses", {}).items()
+
+    current_zone = zone
+    current_session_id = session_id
+
+    # for i, (warehouse_code, warehouse_name) in enumerate(warehouse):
+    #     ecount_logger.info(f"Processing {warehouse_name}...")
+    #     if i > 0:
+    #         ecount_logger.info(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
+    #         time.sleep(config.REQUEST_DELAY)
+
+    #     inventory_data = await fetch_data(zone, session_id, formatted_date, warehouse_code)
+
+    #     if inventory_data:
+    #         if await has_inventory_data(inventory_data):
+    #             df = export_to_df(inventory_data, formatted_date)
+    #             dataframe_list.append(df)
+    #             ecount_logger.info(f"Exported data for {warehouse_code}:{warehouse_name}")
+    #         else:
+    #             empty_warehouses.append(warehouse_name)
+    #             ecount_logger.info(f"No data found for {warehouse_name}")
+    
+    # if dataframe_list:
+    #     combined_df = pd.concat(dataframe_list, ignore_index=True)
+    # else:
+    #     ecount_logger.info("All warehouses returned empty data.")
+    #     combined_df = pd.DataFrame(["Empty"])
+
+    # return empty_warehouses, combined_df
     for i, (warehouse_code, warehouse_name) in enumerate(warehouse):
         ecount_logger.info(f"Processing {warehouse_name}...")
         if i > 0:
             ecount_logger.info(f"Waiting {config.REQUEST_DELAY} seconds before next request...")
             time.sleep(config.REQUEST_DELAY)
 
-        inventory_data = await fetch_data(zone, session_id, formatted_date, warehouse_code)
+        for attempt in range(3):
+            inventory_data = await fetch_data(current_zone, current_session_id, formatted_date, warehouse_code)
 
-        if inventory_data:
-            if await has_inventory_data(inventory_data):
-                df = export_to_df(inventory_data, formatted_date)
-                dataframe_list.append(df)
-                ecount_logger.info(f"Exported data for {warehouse_code}:{warehouse_name}")
-            else:
-                empty_warehouses.append(warehouse_name)
-                ecount_logger.info(f"No data found for {warehouse_name}")
-    
+            if isinstance(inventory_data, dict) and inventory_data.get("error") == "412":
+                ecount_logger.warning(f"Attempt {attempt+1}: Got 412 error, refressing session...")
+                current_zone, current_session_id = login()
+                if not (current_zone and current_session_id):
+                    ecount_logger.error("Failed to refresh session, skipping warehouse")
+                    empty_warehouses.append(warehouse_name)
+                    break
+                continue
+
+            if inventory_data:
+                if await has_inventory_data(inventory_data):
+                    df = export_to_df(inventory_data, formatted_date)
+                    dataframe_list.append(df)
+                    ecount_logger.info(f"Exported data for {warehouse_code}:{warehouse_name}")
+                else:
+                    empty_warehouses.append(warehouse_name)
+                    ecount_logger.info(f"No data found for {warehouse_name}")
+            break
+
     if dataframe_list:
         combined_df = pd.concat(dataframe_list, ignore_index=True)
     else:
@@ -164,7 +185,6 @@ async def process_warehouses(zone: str, session_id: str, warehouses: Dict[str, A
 
     return empty_warehouses, combined_df
 
-@st.cache_resource
 async def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_code: str) -> Union[Dict[str, Any], None]:
     """
     Calls the `get_item_balance_by_location()` function from `api.py` with the provided parameters and returns its result. Refer to documentation of `get_item_balance_by_location()` for more information.
@@ -181,15 +201,32 @@ async def fetch_data(zone: str, session_id: str, formatted_date: str, warehouse_
             - None if no data is available or an error occurs in `get_item_balance_by_location()`.
             - Schema for the response: WH_CD, WH_DES, PROD_CD, PROD_DES, PROD_SIZE_DES, BAL_QTY
     """
-    return get_item_balance_by_location(
-        base_date=formatted_date,
-        zone=zone,
-        session_id=session_id,
-        is_single=False,
-        warehouse_code=warehouse_code
-    )
+    try:
+        return get_item_balance_by_location(
+            base_date=formatted_date,
+            zone=zone,
+            session_id=session_id,
+            is_single=False,
+            warehouse_code=warehouse_code
+        )
+    except Exception as e:
+        if "412" in str(e):
+            ecount_logger.warning("Session may have expired, attempting to refresh...")
+            new_zone, new_session_id = login()
+            if new_zone and new_session_id:
+                return get_item_balance_by_location(
+                    base_date=formatted_date,
+                    zone=new_zone,
+                    session_id=new_session_id,
+                    is_single=False,
+                    warehouse_code=warehouse_code
+                )
+            else:
+                ecount_logger.error("Failed to refresh session.")
+                return None
+        ecount_logger.error(f"API Request Failed with error: {str(e)}")
+        return None
 
-@st.cache_data
 def report_empty_warehouse(empty_warehouses: str) -> list:
     """
     Stores a list of empty warehouses.
@@ -222,7 +259,6 @@ def get_download_link(df: pd.DataFrame, filename: str = "data.csv") -> str:
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV File</a>'
     return href
 
-@st.cache_data
 def get_cached_warehouse_data(zone: str, session_id: str, warehouses: str, formatted_date: str) -> tuple[list[str], pd.DataFrame]:
     """
     Runs and caches the result of the asynchronous `process_warehouses` function.
@@ -244,73 +280,37 @@ def get_cached_warehouse_data(zone: str, session_id: str, warehouses: str, forma
     """
     return run_async(process_warehouses, zone, session_id, warehouses, formatted_date)
 
-def download_callback():
-    """
-    This function sets a flag in `st.session_state` to indicate that the 
-    download has been triggered. It can be used to control UI behavior or 
-    conditional logic (e.g. show a message or trigger another process).
-
-    Side Effects:
-        Sets `st.session_state.downloaded` to True.
-    """
-    st.session_state.downloaded = True
-
 def run():
-    st.title("GoParts Data")
     zone, session_id = login()
 
     if not (zone and session_id):
-        st.write("Login failed. Try again.")
         ecount_logger.error("Login failed.")
         return
 
     ecount_logger.info("Login success!")
 
-    date_input = st.date_input(label="Enter base date:")
-    formatted_base_date = get_formatted_date(str(date_input))
+    formatted_base_date = get_formatted_date(config.BASE_DATE)
     ecount_logger.info("Loading warehouse configuration file...")
     warehouses = load_warehouse_config()
     if not warehouses:
         return
 
-    if st.button("Submit"):
-    
-        if not st.session_state['data_fetched']:
-            with st.spinner("Fetching data..."):
-                empty_warehouses, df = get_cached_warehouse_data(zone, session_id, warehouses, formatted_base_date)
-                total_warehouses = len(warehouses.get("Warehouses", {}))
-                if len(empty_warehouses) == total_warehouses:
-                    ecount_logger.info("API response returned empty data for all warehouses.")
-                    return
-        else:
-            df = st.session_state['df']
-            empty_warehouses = df.session_state['empty_warehouses']
+    empty_warehouses, df = get_cached_warehouse_data(zone, session_id, warehouses, formatted_base_date)
+    total_warehouses = len(warehouses.get("Warehouses", {}))
+    if len(empty_warehouses) == total_warehouses:
+        ecount_logger.info("API response returned empty data for all warehouses.")
+        return
 
-        st.success("Data fetched!")
-        st.dataframe(df)
-        st.write(f"Empty Warehouses: {empty_warehouses}")
-
-        empty = report_empty_warehouse(empty_warehouses)
-        ecount_logger.info(f"Empty Warehouses: {empty}")
-        ecount_logger.info("\nDataframe:")
-        ecount_logger.info(df)
+    empty = report_empty_warehouse(empty_warehouses)
+    ecount_logger.info(f"Empty Warehouses: {empty}")
+    ecount_logger.info("\nDataframe:")
+    ecount_logger.info(df)
         
-        csv = df.to_csv(index=False).encode('utf-8')
-
-        if not st.session_state['downloaded']:
-            st.download_button("Download", csv, "data.csv", "text/csv", key='download_button', on_click=download_callback)
-        else:
-            st.success("File Downloaded.")
-            st.button("Download again", key="download_again")
-            st.session_state['downloaded'] = False
-
-        # If user clicks download button, Streamlit will re-run the app
-        # With that context in mind, load_data_to_bq() will re-run as well
-        ecount_logger.info("Loading data into BigQuery...")
-        with st.spinner("Loading data into BigQuery, please wait before making another request.", show_time=True):
-            schema1 = generate_schema(df)
-            load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema1)
-            df1 = sql_query_bq(f"SELECT * FROM `{config.GCLOUD_PROJECT_ID}.{config.BQ_DATASET_NAME}.{config.BQ_TABLE_NAME}`")
-            new_df = apply_computation_stock(df1)
-            schema2 = generate_schema(new_df)
-            load_data_to_bq(ecount_logger, new_df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, write_mode="WRITE_TRUNCATE", schema=schema2)
+    # csv = df.to_csv(index=False).encode('utf-8')
+    ecount_logger.info("Loading data into BigQuery...")
+    schema1 = generate_schema(df)
+    load_data_to_bq(ecount_logger, df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, schema=schema1)
+    df1 = sql_query_bq(f"SELECT * FROM `{config.GCLOUD_PROJECT_ID}.{config.BQ_DATASET_NAME}.{config.BQ_TABLE_NAME}`")
+    new_df = apply_computation_stock(df1)
+    schema2 = generate_schema(new_df)
+    load_data_to_bq(ecount_logger, new_df, config.GCLOUD_PROJECT_ID, config.BQ_DATASET_NAME, config.BQ_TABLE_NAME, write_mode="WRITE_TRUNCATE", schema=schema2)
